@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI Payment Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #000000;
+            color: white;
+        }   
+        .left-panel {
+            width: 35%;
+            background: white;
+            display: flex           ;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            text-align: center;
+            border-right: 5px solid #4CAF50;
+            color: rgb(0, 23, 80);
+        }
+        .left-panel img {
+            height: 140px;
+            margin-bottom: 20px;
+        }
+        .left-panel h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .left-panel h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+        .left-panel p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .zplus-animation {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: red;
+            animation: blink 1s infinite alternate;
+        }
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.5; }
+        }
+        .zplus-animation {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: rgb(0, 119, 255);
+            text-shadow: 0 0 10px rgba(34, 255, 0, 0.579);
+            animation: cyberGlow 1s infinite alternate;
+        }
+        @keyframes cyberGlow {
+            from { text-shadow: 0 0 10px rgb(0, 255, 55), 0 0 20px #00ff33; }
+            to { text-shadow: 0 0 15px rgb(0, 191, 255), 0 0 30px #2ccaff; }
+        }
+        .adroit {
+            margin-top: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+        .right-panel {
+            width: 65%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .payment-form {
+            background: #222;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            width: 80%;
+        }
+        .payment-form label {
+            display: block;
+            margin: 10px 0 5px;
+            font-size: 14px;
+        }
+        .payment-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 6px;
+            background: #333;
+            color: white;
+        }
+        .scan-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .scan-btn:hover {
+            background: #45a049;
+        }
+        .payment-form button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .payment-form button:hover {
+            background: #45a049;
+        }
+        .logos {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .logos img {
+            height: 40px;
+        }
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .left-panel, .right-panel {
+                width: 100%;
+                padding: 20px;
+            }
+        }
+        video {
+            width: 100%;
+            max-height: 300px;
+            display: none;
+        }
+        #qr-reader {
+            width: 300px;
+            margin: 20px 0;
+            display: none; /* Initially hidden */
+        }
+        .current-location {
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .right-panel {
+            width: 65%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .payment-form {
+            background: #222;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            width: 80%;
+        }
+        .logos {
+            margin-top: 20px;
+            display: flex        ;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            width: 100%;
+            margin-left: -90px;
+        }
+        .logos img {
+            height: 40px;
+        }
+        .customize-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            background: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 120px;
+    margin-right: -100px;
+        }
+        .customize-btn:hover {
+            background: #45a049;
+        }
+        .bottom-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 80%;
+            margin-top: 20px;
+        }
+    </style>
+
+    <!-- Include the html5-qrcode library -->
+    <script src="{{ url_for('static', filename='qr.js') }}"></script>
+    <!-- <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script> -->
+</head>
+<body>
+    <div class="left-panel">
+        <img src="{{ url_for('static', filename='images/sbi.png') }}" alt="SBI Logo">
+        <h1>Payment Gateway</h1>
+        <h2>SBI Life</h2>
+        <p class="zplus-animation">Powered by Security of Z+ Guard</p>
+        <p class="adroit">Developed By Adroit</p>
+
+        <div id="transaction-response" style="margin-top: 20px; font-size: 16px;"></div>
+    </div>
+    <div class="right-panel">
+        <form class="payment-form">
+            <label>Scan UPI ID</label>
+            <button type="button" class="scan-btn" id="toggle-scan-btn">Open Scanner</button>
+            <div id="qr-reader"></div>
+            <label>Enter UPI ID or VPA</label>
+            <input type="text" id="upi-id" placeholder="example@upi">
+            <p id="upi-name" style="color: #4CAF50; font-size: 14px; font-weight: bold; margin-top: 5px;"></p>
+            <label>Enter UPI ID or VPA Of Payer (Sender)</label>
+            <input type="text" id="upi-id-init" placeholder="payer@upi">
+            <label>Enter Amount</label>
+            <input type="number" placeholder="Enter amount">
+            <label>Note</label>
+            <input type="text" placeholder="Enter note (optional)">
+            <button type="submit">Proceed to Pay</button>
+        </form>
+        <div class="bottom-section">
+            <p class="current-location">Fetching location...</p>
+            <div class="logos">
+                <img src="{{ url_for('static', filename='images/upi.png') }}" alt="UPI Logo">
+                <img src="{{ url_for('static', filename='images/npci.png') }}" alt="NCPI Logo">
+                <button class="customize-btn">Customize</button>
+            </div>
+        </div>
+        <p class="ip-address" style="margin-top:20px;"></p>
+    </div>
+
+    <script>
+        let transactionData = {}; // Object to store location & transaction details
+
+        // ✅ Fetch user location and IP details
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch("https://ipapi.co/json/")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.city && data.region && data.postal && data.country_name && data.ip) {
+                        document.querySelector(".current-location").textContent = 
+                            `${data.city}, ${data.region} ${data.postal}, ${data.country_name}`;
+                        document.querySelector(".ip-address").textContent = `IP Address: ${data.ip}`;
+
+                        // Store in transactionData
+                        transactionData.city = data.city;
+                        transactionData.state = data.region;
+                        transactionData.zipcode = data.postal;
+                        transactionData.country = data.country_name;
+                        transactionData.ipAddress = data.ip;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching location:", error);
+                    document.querySelector(".current-location").textContent = "Location not available";
+                    document.querySelector(".ip-address").textContent = "IP Address not available";
+                });
+        });
+
+        // ✅ Initialize QR code scanner
+        const html5QrCode = new Html5Qrcode("qr-reader");
+        const toggleScanBtn = document.getElementById('toggle-scan-btn');
+        let scannerRunning = false;
+
+        toggleScanBtn.addEventListener('click', () => {
+            if (scannerRunning) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    document.getElementById('qr-reader').style.display = 'none';
+                    toggleScanBtn.textContent = 'Open Scanner';
+                    scannerRunning = false;
+                }).catch(err => console.error('Failed to stop scanner:', err));
+            } else {
+                document.getElementById('qr-reader').style.display = 'block';
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: 250 },
+                    (decodedText) => {
+                        try {
+                            let match = decodedText.match(/upi:\/\/pay\?pa=([\w\d.@]+)&pn=([^&]+)/);
+                            if (match) {
+                                document.getElementById('upi-id').value = match[1];  // UPI ID
+                                document.getElementById('upi-name').textContent = `Name: ${decodeURIComponent(match[2])}`;
+                            } else {
+                                throw new Error("Invalid QR Code. Could not extract UPI details.");
+                            }
+
+                            // Stop scanner after successful scan
+                            html5QrCode.stop().then(() => {
+                                html5QrCode.clear();
+                                document.getElementById('qr-reader').style.display = 'none';
+                                toggleScanBtn.textContent = 'Open Scanner';
+                                scannerRunning = false;
+                            }).catch(err => console.error('Failed to stop scanner:', err));
+                        } catch (error) {
+                            alert(error.message);
+                            console.error(error);
+                        }
+                    },
+                    (errorMessage) => console.warn(`QR Code scan error: ${errorMessage}`)
+                ).then(() => {
+                    toggleScanBtn.textContent = 'Close Scanner';
+                    scannerRunning = true;
+                }).catch(err => console.error('Failed to start scanner:', err));
+            }
+        });
+
+        // ✅ Handle Payment Form Submission
+        document.querySelector(".payment-form").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+    
+            transactionData.amount = parseFloat(document.querySelector("input[type='number']").value) || 0;
+            transactionData.payerVPA = document.getElementById("upi-id-init").value;
+            transactionData.payeeVPA = document.getElementById("upi-id").value;
+            transactionData.description = document.querySelector("input[placeholder='Enter note (optional)']").value || "No description";
+    
+            fetch("/process_payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(transactionData)
+            })
+            .then(response => response.json())
+.then(data => {
+    console.log("Transaction Response:", data);
+
+    if (data.error) {
+        document.getElementById("transaction-response").innerHTML =
+            `<p style='color: red; font-weight: bold;'>${data.error}</p>`;
+    } else {
+        document.getElementById("transaction-response").innerHTML =
+            `<p style='color: green; font-weight: bold;'>${data.message}</p>`;
+    }
+})
+.catch(error => {
+    console.error("Error:", error);
+    document.getElementById("transaction-response").innerHTML =
+        `<p style='color: red; font-weight: bold;'>Transaction failed! Please try again.</p>`;
+});
+
+        });
+    </script>
+</body>
+</html>

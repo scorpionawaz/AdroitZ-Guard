@@ -1,0 +1,7 @@
+fastapi
+mysql-connector-python
+uvicorn
+flask
+requests
+numpy
+pandas
