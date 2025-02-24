@@ -40,6 +40,11 @@ class Account:
                 return f"❌ Error updating bank balance: {e}"
         return "⚠️ Database connection not available."
 
+
+    # statuses 
+    # Active
+    # Suspended
+    # Blocked
     def update_account_status(self, vpa, new_status):
         """Update the account status of a specific account using VPA."""
         if self.connection:
@@ -69,7 +74,7 @@ class Account:
             cursor.close()
             if result:
                 details = "\n".join([f"{key}: {value}" for key, value in result.items()])
-                return f"📜 Account Details:\n{details}"
+                return f" Account Details:\n{details}"
             return "⚠️ Account not found."
         return "⚠️ Database connection not available."
 
@@ -142,5 +147,5 @@ class Account:
             self.connection.close()
             print("✅ Database connection closed.")
             
-db  = Account()
-db.generate_qr_code("sandeepmore3@apl")
+# db  = Account()
+# db.generate_qr_code("sandeepmore3@apl")

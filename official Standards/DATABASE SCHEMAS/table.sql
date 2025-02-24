@@ -61,19 +61,6 @@ CALL Insert_Realistic_Accounts();
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
--- Transaction_history  
-CREATE TABLE Transaction_History (
-    transaction_id        VARCHAR(50) PRIMARY KEY,  -- Unique transaction ID
-    account_no           BIGINT NOT NULL,          -- Foreign key from Account table
-    receiver_vpa         VARCHAR(100) NOT NULL,    -- Receiver account VPA
-    transaction_amount   DECIMAL(15,2) NOT NULL,  -- Amount involved in the transaction
-    transaction_mode     VARCHAR(50) NOT NULL,    -- Mode (UPI, NEFT, IMPS, etc.)
-    transaction_status   ENUM('Successful', 'Insufficient Balance', 'Network Down', 'Blocked Account', 'Suspended', 'Limit Crossed', 'Fraud Detected') NOT NULL,  
-    transaction_date     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Date and time of transaction
-    location            VARCHAR(255),             -- Location of transaction
-    FOREIGN KEY (account_no) REFERENCES account(account_no) ON DELETE CASCADE
-);
-
 DELIMITER $$
 CREATE FUNCTION generate_transaction_id() RETURNS VARCHAR(50) DETERMINISTIC
 BEGIN
@@ -91,3 +78,46 @@ BEGIN
     SET NEW.transaction_id = generate_transaction_id();
 END $$
 DELIMITER ;
+
+
+
+-----------------------------------------------------------------------   transaction history
+CREATE TABLE Transaction_History (
+    transaction_id        BIGINT PRIMARY KEY AUTO_INCREMENT,
+    
+    -- Payer Details (Sender)
+    payer_account_no      BIGINT NOT NULL,
+    payer_vpa            VARCHAR(255) NOT NULL,
+    
+    -- Receiver Details
+    receiver_vpa         VARCHAR(255) NOT NULL,
+    
+    -- Transaction Details
+    transaction_amount   DECIMAL(15,2) NOT NULL,
+    date_time_stamp      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payer_location_zip   VARCHAR(10),
+    payer_city           VARCHAR(100),  -- Added City
+    payer_state          VARCHAR(100),  -- Added State
+    
+    -- IP Address (Supports IPv4 & IPv6)
+    ip_address          VARCHAR(45), -- Max length for IPv6 is 45 characters
+    
+    -- Additional Metadata		
+    transaction_note    VARCHAR(500), -- Note (like "Dinner", "Shopping" etc.)
+    device         VARCHAR(50),  -- device
+  
+    -- Mode & Status
+    mode                ENUM('UPI', 'NEFT', 'IMPS', 'RTGS', 'CARD', 'CASH') NOT NULL,
+    status              ENUM(
+                            'SUCCESSFUL', 
+                            'INSUFFICIENT_BALANCE', 
+                            'NETWORK_DOWN', 
+                            'BLOCKED_ACCOUNT', 
+                            'SUSPENDED', 
+                            'LIMIT_CROSSED', 
+                            'FRAUD_DETECTED_STOPPED'
+                          ) NOT NULL,
+
+    -- Foreign Key Constraint
+    FOREIGN KEY (payer_account_no) REFERENCES account(account_no)
+);

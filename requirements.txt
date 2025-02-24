@@ -5,3 +5,5 @@ flask
 requests
 numpy
 pandas
+spacy
+scikit-learn

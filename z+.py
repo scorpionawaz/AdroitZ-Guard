@@ -6,28 +6,7 @@ from datetime import datetime
 import json
 from fpdf import FPDF
 app = FastAPI()
-def append_fraud_summary_to_pdf(response_json, filename="fraud_report.pdf"):
-    try:
-        data = json.loads(response_json)  # Convert JSON string to dictionary
-        if data.get("fraud_or_scam_happened") == "true":
-            summary = data.get("summary", "No details provided.")
-            transaction_name = data.get("name", "Unknown Transaction")
-            
-            pdf = FPDF()
-            try:
-                pdf.add_page()
-                pdf.set_font("Arial", style='', size=12)
-                pdf.cell(200, 10, "Fraud Detection Report by Z+Guard BY Automation", ln=True, align='C')
-                pdf.ln(10)  # Line break
-                pdf.multi_cell(0, 10, f"Transaction: {transaction_name}\nSummary: {summary}")
-                pdf.output(filename, 'F')
-                print(f"PDF updated with transaction: {transaction_name}")
-            except Exception as e:
-                print(f"Error while updating PDF: {e}")
-        else:
-            print("No fraud detected. PDF not updated.")
-    except json.JSONDecodeError:
-        print("Invalid JSON response")
+
 class Authentication(BaseModel):
     upiPin: str
 
@@ -63,6 +42,95 @@ class Transaction(BaseModel):
     locationDetails: LocationDetails
     description: str
     callbackUrl: str
+from fpdf import FPDF
+import json
+from datetime import datetime
+
+def sanitize_text(text):
+    """ Remove non-ASCII characters to avoid encoding issues in PDF """
+    return ''.join(char for char in text if ord(char) < 128)
+
+from fpdf import FPDF
+import json
+from datetime import datetime
+
+def sanitize_text(text):
+    """Convert text to a latin-1 safe format by removing unsupported characters."""
+    if text is None:
+        return "N/A"
+    text = str(text).replace("₹", "INR")  # Replace Rupee symbol
+    return text.encode("latin-1", "ignore").decode("latin-1")  # Remove unsupported characters
+
+def append_fraud_summary_to_pdf(response_json, transaction, filename="fraud_report.pdf"):
+    try:
+        data = json.loads(response_json)  
+        
+        if data.get("fraud_or_scam_happened") == "true":
+            global summary
+            summary = sanitize_text(data.get("summary", "No details provided."))
+            transaction_name = sanitize_text(data.get("name", "Unknown Transaction"))
+
+            # Fetch payer and payee details
+            adb = account.Account()
+            payer_details = sanitize_text(adb.get_account_details(transaction.payer.vpa))
+            payee_details = sanitize_text(adb.get_account_details(transaction.payee.vpa))
+
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
+
+            # Header
+            pdf.cell(200, 10, "Fraud Detection Report", ln=True, align='C')
+            pdf.ln(10)
+
+            # Fraud Summary
+            pdf.set_font("Arial", style='B', size=12)
+            pdf.cell(200, 10, "Fraud Summary", ln=True)
+            pdf.set_font("Arial", size=10)
+            pdf.multi_cell(0, 10, f"Transaction: {transaction_name}\nSummary: {summary}")
+            pdf.ln(5)
+
+            # Payer Details
+            pdf.set_font("Arial", style='B', size=12)
+            pdf.cell(200, 10, "Payer Details", ln=True)
+            pdf.set_font("Arial", size=10)
+            pdf.multi_cell(0, 10, payer_details)
+            pdf.ln(5)
+
+            # Payee Details
+            pdf.set_font("Arial", style='B', size=12)
+            pdf.cell(200, 10, "Payee Details", ln=True)
+            pdf.set_font("Arial", size=10)
+            pdf.multi_cell(0, 10, payee_details)
+            pdf.ln(5)
+
+            # Transaction Details
+            pdf.set_font("Arial", style='B', size=12)
+            pdf.cell(200, 10, "Transaction Details", ln=True)
+            pdf.set_font("Arial", size=10)
+            pdf.multi_cell(0, 10, f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                                  f"Amount: INR {sanitize_text(transaction.amount)}\n"
+                                  f"Note: {sanitize_text(transaction.description)}\n"
+                                  f"Location: {sanitize_text(transaction.locationDetails.city)}, {sanitize_text(transaction.locationDetails.state)}, {sanitize_text(transaction.locationDetails.country)}\n"
+                                  f"Zipcode: {sanitize_text(transaction.payer.zipcode)}\n"
+                                  f"Device Type: {sanitize_text(transaction.payer.deviceInfo.deviceType)}\n"
+                                  f"Mobile Carrier: {sanitize_text(transaction.payer.deviceInfo.mobileCarrier)}\n"
+                                  f"Latitude: {sanitize_text(transaction.payer.geolocation.latitude)}, Longitude: {sanitize_text(transaction.payer.geolocation.longitude)}\n"
+                                  f"IP Address: {sanitize_text(transaction.payer.ipAddress)}")
+
+            # Save PDF
+            pdf.output(filename, 'F')
+            print(f"✅ PDF updated: {transaction_name}")
+        else:
+            print("ℹ️ No fraud detected. PDF not updated.")
+
+    except json.JSONDecodeError:
+        print("⚠️ Invalid JSON response")
+    except Exception as e:
+        print(f"❌ Error while updating PDF: {e}")
+
+
+
 
 @app.post("/transaction")
 async def create_transaction(transaction: Transaction, request: Request):
@@ -155,11 +223,42 @@ async def create_transaction(transaction: Transaction, request: Request):
        if is_fraudulent == True:
           with open("patterndatabase.json", "r") as file:
             patterndb = str(json.load(file))
-            
+          
+        #   now here is the one of the important and last Step  to analayze the pattterns at Human level
           fffresult = (zanalyzer.send_to_z_analyze(patterndb,tdb.get_transactions_by_vpa_combined(transaction.payer.vpa),str(latestQ)))
           print(fffresult)
-          append_fraud_summary_to_pdf(fffresult)
-          return {"error": "❌ WARNING :: Unusal Behavior Check the Values and AMount Again."+str(reasons) }
+          append_fraud_summary_to_pdf(fffresult,transaction)
+        #   blocking Fruadlant account 
+        # and suspending the User 
+        
+          adb.update_account_status(transaction.payer.vpa,"Suspended")
+          adb.update_account_status(transaction.payee.vpa,"Blocked")
+          
+        #   updating the logs 
+        # ENUM(
+        #                     'SUCCESSFUL', 
+        #                     'INSUFFICIENT_BALANCE', 
+        #                     'NETWORK_DOWN', 
+        #                     'BLOCKED_ACCOUNT', 
+        #                     'SUSPENDED', 
+        #                     'LIMIT_CROSSED', 
+        #                     'FRAUD_DETECTED_STOPPED'
+        #                   ) 
+          tdb.insert_transaction(
+            payer_account_no=payer_accountno,
+            payer_vpa=transaction.payer.vpa,
+            receiver_vpa=transaction.payee.vpa,
+            transaction_amount=transaction.amount,
+            payer_location_zip=transaction.payer.zipcode,
+            payer_city=transaction.locationDetails.city,
+            payer_state=transaction.locationDetails.state,
+            ip_address=transaction.payer.ipAddress,
+            transaction_note=transaction.description,
+            device=transaction.payer.deviceInfo.deviceType,
+            mode="UPI",
+            status="FRAUD_DETECTED_STOPPED"
+          )
+          return {"error": "❌ This is a Scam or Fraud:."+str(summary)+ "Your Account Has Been Suspended For Security Reasons" }
          
        
     except:

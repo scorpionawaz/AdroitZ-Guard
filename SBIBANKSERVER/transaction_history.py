@@ -170,7 +170,7 @@ class TransactionHistory:
          return json.dumps([])  # Return empty JSON on error
 
 
-    def get_transactions_by_vpa_combined(self, vpa, limit=100):
+    def get_transactions_by_vpa_combined(self, vpa, limit=10):
         """Retrieve both sent and received transactions for a given VPA."""
         if not self.connection:
             print("Database connection not available.")
@@ -179,13 +179,16 @@ class TransactionHistory:
         try:
             query = """
             (SELECT 'sent' AS transaction_type, receiver_vpa, transaction_amount, date_time_stamp, payer_location_zip, transaction_note
-             FROM Transaction_History WHERE payer_vpa = %s)
+             FROM Transaction_History 
+             WHERE payer_vpa = %s AND status = 'SUCCESSFUL')
             UNION ALL
             (SELECT 'received' AS transaction_type, payer_vpa AS receiver_vpa, transaction_amount, date_time_stamp, payer_location_zip, transaction_note
-             FROM Transaction_History WHERE receiver_vpa = %s)
+             FROM Transaction_History 
+             WHERE receiver_vpa = %s AND status = 'SUCCESSFUL')
             ORDER BY date_time_stamp DESC
             LIMIT %s
-            """
+        """
+
             
             with self.connection.cursor(dictionary=True) as cursor:
                 cursor.execute(query, (vpa, vpa, limit))

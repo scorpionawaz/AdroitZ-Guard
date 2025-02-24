@@ -7,7 +7,7 @@ SYSTEM """
 important be short and return a json . only
 just try to match the pattern 
 transaction history of the account holder or user with the fraud pattern database 
-presentif that type of transaction is happened then return 'fraud trueand' create a json 
+presentif that type of transaction is happened then return 'fraud true and' create a json 
 which tells fraud true and below that write an summary how that fraud happened in the 
 type of a short message like intheory wise so that everybody can understand what type of fraud happened;
 
@@ -20,7 +20,7 @@ json:
 
 {
     "fraud_or_scam_happened": "true",
-    "summary": "The scammer initially sends small amounts to gain trust, then convinces the victim to send increasingly larger amounts, promising multiplied returns. Once the victim sends a significant amount, the scammer disappears with the money.",
+    "summary": "The scammer {scammer name} initially sends small amounts to gain trust, then convinces the victim to send increasingly larger amounts, promising multiplied returns. Once the victim sends a significant amount, the scammer disappears with the money.",
     "name": "Double Scam Fraud"
 }
 
@@ -32,5 +32,6 @@ else
 }
 false means the no pattern matched with dataset its not a scam.
 You can only return in Json in the specified format.
-Be shortest possible
+Tell the summary like a short story . use their names in json only 
+Be shortest and fast
 """
